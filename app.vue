@@ -5,9 +5,9 @@
   <div>
     <h2>Projects</h2>
     <ul>
-      <li v-for="project in projects" :key="project.name">
-        <h3>{{ project.name }}</h3>
-        <p>{{ project.description }}</p>
+      <li v-for="Project in Projects" :key="Project.name">
+        <h3>{{ Project.name }}</h3>
+        <p>{{ Project.description }}</p>
       </li>
     </ul>
   </div>
@@ -16,15 +16,15 @@
   <div>
     <h2>Blogs</h2>
     <ul>
-      <li v-for="blog in blogs">
-        <h3>{{ blog.title }}</h3>
-        <p>{{ blog.content }}</p>
+      <li v-for="Blog in Blogs">
+        <h3>{{ Blog.title }}</h3>
+        <p>{{ Blog.content }}</p>
       </li>
     </ul>
   </div>
 
 
-  <div>
+  <div class>
     <h1>Create a New Project</h1>
     <form @submit.prevent="createProject">
       <div>
@@ -41,10 +41,13 @@
 
   <div>
     <h1>Update the Project</h1>
-    <form @submit.prevent="deleteProject">
+    <form @submit.prevent="updateProject">
       <div>
-        <label for="p_id">Project ID: </label>
-        <input type="text" v-model="newProject.p_id" id="p_id" required />
+        <label for="id">Project ID: </label>
+        <!--<input type="text" v-model="updateProject.id" id="p_id" required />-->
+        <select v-model="updateProject.id" id="ProjecttID" required>
+          <option v-for="Project in Projects" :key="Project._id" :value="Project._id">{{ Project.name }}</option>
+        </select>
       </div>
       <button type="submit">update the Project</button>
     </form>
@@ -55,35 +58,37 @@
     <h1>Delete Project</h1>
     <form @submit.prevent="deleteProject">
       <div>
-        <label for="p_id">Project ID: </label>
-        <input type="text" v-model="newProject.p_id" id="p_id" required />
+        <label for="id">Project ID: </label>
+        <input type="text" v-model="deleteProject.id" id="ProjectID" required />
       </div>
       <button type="submit">Delete the Project</button>
     </form>
   </div>
 
 
-  <NuxtPage />
+
 </template>
 
 <script setup>
 
 
 const myname = "Tharushi De Silva";
-import { ref } from 'vue';
+//import { ref } from 'vue';
+
 const {
-  data: projects,
-  pending,
-  error,
-} = useFetch("http://localhost:5000/Projects");
-const {
-  data: blogs,
+  data: Projects,
   pending1,
   error1,
+} = useFetch("http://localhost:5000/Projects");
+const {
+  data: Blogs,
+  pending2,
+  error2,
 } = useFetch("http://localhost:5000/Blogs");
+
 const newProject = ref({
-  name: "",
-  description: "",
+  name: '',
+  description: '',
 });
 const createProject = async () => {
   console.log(newProject.value);
@@ -101,56 +106,99 @@ const createProject = async () => {
     }
 
     const result = await response.json();
-    projects.value.push(result);//add new project and display it within the UI itself without refreshing
+
+    Projects.value.push(result);//add new project and display it within the UI itself without refreshing
 
     //Clear the form
     newProject.value.name = '';
     newProject.value.description = '';
   } catch (error) {
-    console.error('Error: ', error);
+    console.error(error);
   }
 };
 
-const updateProject = async () => {
-  console.log(newProject.value);
+
+const updateProject = ref({
+  id: '',
+  name: '',
+  description: '',
+});
+
+const editProject = async () => {
+  console.log(updateProject.value);
   try {
-    const response = await fetch(`http://localhost:5000/Projects/${newProject.value.id}`, {
+    const response = await fetch(`http://localhost:5000/Projects/${updateProject.value.id}`, {
       method: 'PATCH',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(newProject.value),
+      body: JSON.stringify(updateProject.value),
     });
     if (!response.ok) {
       throw new Error("Failed to update project.");
     }
 
     const result = await response.json();
-    const index = projects.value.findIndex(p => p.id === newProject.value.id);
+    const index = Projects.value.findIndex(project => project.id === updateProject.value.id);
     if (index !== -1) {
-      projects.value[index] = result;
+      Projects.value[index] = result;
     }
-
-    newProject.value.id = null;
+    updateProject.value.id = '';
+    updateProject.value.name = '';
+    updateProject.value.description = '';
 
   } catch (error) {
-    console.error('Error: ', error);
+    console.error('Error:', error);
   }
+
 };
-const deleteProject = async (id) => {
+
+const deleteProject = ref({
+  id: '',
+});
+
+const removeProject = async () => {
+  console.log(deleteProject.value);
   try {
-    const response = await fetch(`http://localhost:5000/Projects/${id}`, {
+    const response = await fetch(`http://localhost:5000/Projects/${deleteProject.value.id}`, {
       method: 'DELETE',
     });
     if (!response.ok) {
       throw new Error("Failed to delete project.");
     }
+    const result = await response.json();
+    //to Remove the project from the list
+    const index = Projects.value.findIndex((project) => project._id === deleteProject.value.id);
+    if (index !== -1) {
+      Projects.value.splice(index, 1);
+    }
 
-    projects.value = projects.value.filter(p => p.id !== id);
+    //clear the form
+    deleteProject.value.id = '';
   } catch (error) {
-    console.error('Error: ', error);
+    console.error(error);
   }
 };
 
 </script>
-<style></style>
+<style>
+
+.form {
+  max-width: 400px;
+  margin: 0 auto;
+}
+
+label {
+  display:block;
+  font-weight: bold;
+}
+
+input[type="text"],
+textarea {
+  width: 50%;
+  padding: 8px;
+  border: 1px solid #000000;
+  border-radius: 5px;
+}
+
+</style>
