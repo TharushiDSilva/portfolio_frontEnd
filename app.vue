@@ -8,6 +8,9 @@
       <li v-for="Project in Projects" :key="Project.name">
         <h3>{{ Project.name }}</h3>
         <p>{{ Project.description }}</p>
+        <p>{{ Project._id }}</p>
+        <hr>
+
       </li>
     </ul>
   </div>
@@ -21,10 +24,6 @@
         <p>{{ Blog.content }}</p>
       </li>
     </ul>
-  </div>
-
-
-  <div class>
     <h1>Create a New Project</h1>
     <form @submit.prevent="createProject">
       <div>
@@ -41,13 +40,18 @@
 
   <div>
     <h1>Update the Project</h1>
-    <form @submit.prevent="updateProject">
+    <form @submit.prevent="editProject">
       <div>
         <label for="id">Project ID: </label>
         <!--<input type="text" v-model="updateProject.id" id="p_id" required />-->
-        <select v-model="updateProject.id" id="ProjecttID" required>
-          <option v-for="Project in Projects" :key="Project._id" :value="Project._id">{{ Project.name }}</option>
+        <select v-model="updateProject.id" id="ProjectID" required>
+          <option v-for="Project in Projects" :key="Project._id" :value="Project._id">{{ Project._id }}</option>
         </select>
+        <label for="name">Project Name:</label>
+        <input type="text" v-model="updateProject.name" id="name" required>
+        <label for="description">Project Description:</label>
+        <textarea id="description" v-model="updateProject.description" required></textarea>
+
       </div>
       <button type="submit">update the Project</button>
     </form>
@@ -56,16 +60,18 @@
 
   <div>
     <h1>Delete Project</h1>
-    <form @submit.prevent="deleteProject">
+    <form @submit.prevent="removeProject">
       <div>
         <label for="id">Project ID: </label>
-        <input type="text" v-model="deleteProject.id" id="ProjectID" required />
+        <select v-model="deleteProject.id" id="ProjectID" required>
+          <option v-for="Project in Projects" :value="Project.id">{{ Project.name }}</option>
+        </select>
       </div>
       <button type="submit">Delete the Project</button>
     </form>
   </div>
 
-
+  <NuxtPage />
 
 </template>
 
@@ -89,6 +95,7 @@ const {
 const newProject = ref({
   name: '',
   description: '',
+  id: '',
 });
 const createProject = async () => {
   console.log(newProject.value);
@@ -112,6 +119,8 @@ const createProject = async () => {
     //Clear the form
     newProject.value.name = '';
     newProject.value.description = '';
+
+
   } catch (error) {
     console.error(error);
   }
@@ -139,10 +148,11 @@ const editProject = async () => {
     }
 
     const result = await response.json();
-    const index = Projects.value.findIndex(project => project.id === updateProject.value.id);
+    const index = Projects.value.findIndex(project => project._id === updateProject.value.id);
     if (index !== -1) {
       Projects.value[index] = result;
     }
+    Projects.value.push(result);
     updateProject.value.id = '';
     updateProject.value.name = '';
     updateProject.value.description = '';
@@ -155,6 +165,7 @@ const editProject = async () => {
 
 const deleteProject = ref({
   id: '',
+  name: '',
 });
 
 const removeProject = async () => {
@@ -162,6 +173,10 @@ const removeProject = async () => {
   try {
     const response = await fetch(`http://localhost:5000/Projects/${deleteProject.value.id}`, {
       method: 'DELETE',
+      headers: {
+        "Content-Type": "application/json",
+      },
+
     });
     if (!response.ok) {
       throw new Error("Failed to delete project.");
@@ -173,23 +188,25 @@ const removeProject = async () => {
       Projects.value.splice(index, 1);
     }
 
-    //clear the form
+    //clear the form  
     deleteProject.value.id = '';
+
   } catch (error) {
-    console.error(error);
+    console.error('Error:', error);
   }
 };
 
 </script>
 <style>
-
 .form {
   max-width: 400px;
   margin: 0 auto;
 }
 
+
+
 label {
-  display:block;
+  display: block;
   font-weight: bold;
 }
 
@@ -201,4 +218,20 @@ textarea {
   border-radius: 5px;
 }
 
+button {
+  background-color: rgb(82, 168, 229);
+  border: 1;
+
+
+}
+
+over {
+  animation: forwards;
+
+}
+
+h1 {
+  color: rgb(0, 17, 97);
+  font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
+}
 </style>
